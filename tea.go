@@ -835,6 +835,10 @@ func (p *Program) Start() error {
 	return err
 }
 
+type Sender interface {
+	Send(Msg)
+}
+
 // Send sends a message to the main update function, effectively allowing
 // messages to be injected from outside the program for interoperability
 // purposes.
