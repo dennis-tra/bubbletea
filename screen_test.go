@@ -85,12 +85,12 @@ func TestClearMsg(t *testing.T) {
 			var in bytes.Buffer
 
 			m := &testModel{}
-			p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+			p := NewProgram(WithInput(&in), WithOutput(&buf))
 
 			test.cmds = append(test.cmds, Quit)
 			go p.Send(test.cmds)
 
-			if _, err := p.Run(); err != nil {
+			if _, err := p.Run(m); err != nil {
 				t.Fatal(err)
 			}
 

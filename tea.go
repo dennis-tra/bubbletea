@@ -132,8 +132,6 @@ func (h channelHandlers) shutdown() {
 
 // Program is a terminal user interface.
 type Program struct {
-	initialModel Model
-
 	// Configuration options that will set as the program is initializing,
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
@@ -234,9 +232,8 @@ type SuspendMsg struct{}
 type ResumeMsg struct{}
 
 // NewProgram creates a new Program.
-func NewProgram(model Model, opts ...ProgramOption) *Program {
+func NewProgram(opts ...ProgramOption) *Program {
 	p := &Program{
-		initialModel: model,
 		msgs:         make(chan Msg),
 		rendererDone: make(chan struct{}),
 	}
@@ -608,7 +605,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // Run initializes the program and runs its event loops, blocking until it gets
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
-func (p *Program) Run() (Model, error) {
+func (p *Program) Run(model Model) (Model, error) {
 	handlers := channelHandlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
@@ -636,7 +633,7 @@ func (p *Program) Run() (Model, error) {
 
 		f, err := openInputTTY()
 		if err != nil {
-			return p.initialModel, err
+			return model, err
 		}
 		defer f.Close() //nolint:errcheck
 		p.input = f
@@ -645,7 +642,7 @@ func (p *Program) Run() (Model, error) {
 		// Open a new TTY, by request
 		f, err := openInputTTY()
 		if err != nil {
-			return p.initialModel, err
+			return model, err
 		}
 		defer f.Close() //nolint:errcheck
 		p.input = f
@@ -674,7 +671,7 @@ func (p *Program) Run() (Model, error) {
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
 	// so on.
 	if err := p.initTerminal(); err != nil {
-		return p.initialModel, err
+		return model, err
 	}
 
 	// If no renderer is set use the standard one.
@@ -693,7 +690,7 @@ func (p *Program) Run() (Model, error) {
 		// Set the initial size of the terminal.
 		w, h, err := term.GetSize(p.ttyOutput.Fd())
 		if err != nil {
-			return p.initialModel, err
+			return model, err
 		}
 
 		p.renderer.Resize(w, h)
@@ -706,7 +703,6 @@ func (p *Program) Run() (Model, error) {
 	}
 
 	// Init the input reader and initial model.
-	model := p.initialModel
 	if p.input != nil {
 		if err := p.initInputReader(); err != nil {
 			return model, err
@@ -821,8 +817,8 @@ func (p *Program) Run() (Model, error) {
 // or its signal handler. Returns the final model.
 //
 // Deprecated: please use [Program.Run] instead.
-func (p *Program) StartReturningModel() (Model, error) {
-	return p.Run()
+func (p *Program) StartReturningModel(model Model) (Model, error) {
+	return p.Run(model)
 }
 
 // Start initializes the program and runs its event loops, blocking until it
@@ -830,8 +826,8 @@ func (p *Program) StartReturningModel() (Model, error) {
 // handler.
 //
 // Deprecated: please use [Program.Run] instead.
-func (p *Program) Start() error {
-	_, err := p.Run()
+func (p *Program) Start(model Model) error {
+	_, err := p.Run(model)
 	return err
 }
 

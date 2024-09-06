@@ -10,7 +10,7 @@ import (
 func TestOptions(t *testing.T) {
 	t.Run("output", func(t *testing.T) {
 		var b bytes.Buffer
-		p := NewProgram(nil, WithOutput(&b))
+		p := NewProgram(WithOutput(&b))
 		if f, ok := p.output.(*os.File); ok {
 			t.Errorf("expected output to custom, got %v", f.Fd())
 		}
@@ -18,7 +18,7 @@ func TestOptions(t *testing.T) {
 
 	t.Run("custom input", func(t *testing.T) {
 		var b bytes.Buffer
-		p := NewProgram(nil, WithInput(&b))
+		p := NewProgram(WithInput(&b))
 		if p.input != &b {
 			t.Errorf("expected input to custom, got %v", p.input)
 		}
@@ -28,7 +28,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("renderer", func(t *testing.T) {
-		p := NewProgram(nil, WithoutRenderer())
+		p := NewProgram(WithoutRenderer())
 		switch p.renderer.(type) {
 		case *NilRenderer:
 			return
@@ -38,14 +38,14 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("without signals", func(t *testing.T) {
-		p := NewProgram(nil, WithoutSignals())
+		p := NewProgram(WithoutSignals())
 		if atomic.LoadUint32(&p.ignoreSignals) == 0 {
 			t.Errorf("ignore signals should have been set")
 		}
 	})
 
 	t.Run("filter", func(t *testing.T) {
-		p := NewProgram(nil, WithFilter(func(_ Model, msg Msg) Msg { return msg }))
+		p := NewProgram(WithFilter(func(_ Model, msg Msg) Msg { return msg }))
 		if p.filter == nil {
 			t.Errorf("expected filter to be set")
 		}
@@ -53,7 +53,7 @@ func TestOptions(t *testing.T) {
 
 	t.Run("input options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, expect inputType) {
-			p := NewProgram(nil, opt)
+			p := NewProgram(opt)
 			if p.inputType != expect {
 				t.Errorf("expected input type %s, got %s", expect, p.inputType)
 			}
@@ -71,7 +71,7 @@ func TestOptions(t *testing.T) {
 
 	t.Run("startup options", func(t *testing.T) {
 		exercise := func(t *testing.T, opt ProgramOption, expect startupOptions) {
-			p := NewProgram(nil, opt)
+			p := NewProgram(opt)
 			if !p.startupOptions.has(expect) {
 				t.Errorf("expected startup options have %v, got %v", expect, p.startupOptions)
 			}
@@ -98,7 +98,7 @@ func TestOptions(t *testing.T) {
 		})
 
 		t.Run("mouse cell motion", func(t *testing.T) {
-			p := NewProgram(nil, WithMouseAllMotion(), WithMouseCellMotion())
+			p := NewProgram(WithMouseAllMotion(), WithMouseCellMotion())
 			if !p.startupOptions.has(withMouseCellMotion) {
 				t.Errorf("expected startup options have %v, got %v", withMouseCellMotion, p.startupOptions)
 			}
@@ -108,7 +108,7 @@ func TestOptions(t *testing.T) {
 		})
 
 		t.Run("mouse all motion", func(t *testing.T) {
-			p := NewProgram(nil, WithMouseCellMotion(), WithMouseAllMotion())
+			p := NewProgram(WithMouseCellMotion(), WithMouseAllMotion())
 			if !p.startupOptions.has(withMouseAllMotion) {
 				t.Errorf("expected startup options have %v, got %v", withMouseAllMotion, p.startupOptions)
 			}
@@ -119,7 +119,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("multiple", func(t *testing.T) {
-		p := NewProgram(nil, WithMouseAllMotion(), WithoutBracketedPaste(), WithAltScreen(), WithInputTTY())
+		p := NewProgram(WithMouseAllMotion(), WithoutBracketedPaste(), WithAltScreen(), WithInputTTY())
 		for _, opt := range []startupOptions{withMouseAllMotion, withoutBracketedPaste, withAltScreen} {
 			if !p.startupOptions.has(opt) {
 				t.Errorf("expected startup options have %v, got %v", opt, p.startupOptions)
